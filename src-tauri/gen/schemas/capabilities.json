@@ -1,0 +1,1 @@
+{"default-capability":{"identifier":"default-capability","description":"Default capabilities for the application","local":true,"windows":["main"],"permissions":["dialog:default","fs:default","shell:allow-open"]}}

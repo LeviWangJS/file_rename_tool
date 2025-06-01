@@ -1,0 +1,10 @@
+{
+  "identifier": "default-capability",
+  "description": "Default capabilities for the application",
+  "windows": ["main"],
+  "permissions": [
+    "dialog:default",
+    "fs:default",
+    "shell:allow-open"
+  ]
+} 

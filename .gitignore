@@ -1,0 +1,40 @@
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+.pnpm-debug.log
+.npm/
+
+# Tauri
+target/
+dist/
+.cargo/
+Cargo.lock
+
+# Build artifacts
+release-builds/
+*.app
+*.dmg
+*.exe
+*.msi
+*.deb
+*.AppImage
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# IDE files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+.vs/
+
+# Env files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local

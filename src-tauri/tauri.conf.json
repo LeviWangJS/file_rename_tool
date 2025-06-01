@@ -1,0 +1,48 @@
+{
+  "$schema": "https://raw.githubusercontent.com/tauri-apps/tauri/tauri-v2.0.0/tooling/cli/schema.json",
+  "productName": "图片批量重命名工具",
+  "version": "1.0.0",
+  "identifier": "com.imagerenamer.app",
+  "app": {
+    "windows": [
+      {
+        "fullscreen": false,
+        "resizable": true,
+        "title": "图片批量重命名工具",
+        "width": 900,
+        "height": 700,
+        "minWidth": 800,
+        "minHeight": 600
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build",
+    "devUrl": "http://localhost:1420",
+    "frontendDist": "../dist"
+  },
+  "bundle": {
+    "active": true,
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "targets": "all"
+  },
+  "plugins": {
+    "shell": {
+      "open": true
+    },
+    "dialog": null,
+    "fs": {
+      "requireLiteralLeadingDot": false
+    }
+  }
+} 
