@@ -1,0 +1,13 @@
+{
+  "$schema": "https://tauri.app/v2/config-schema.json",
+  "bundle": {
+    "windows": {
+      "wix": {
+        "enabled": false
+      },
+      "nsis": {
+        "enabled": true
+      }
+    }
+  }
+} 

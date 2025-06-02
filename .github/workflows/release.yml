@@ -71,6 +71,12 @@ jobs:
           node-version: 18
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
+      - name: Setup Windows Environment Variables
+        if: matrix.platform == 'windows-latest'
+        shell: pwsh
+        run: |
+          echo "TAURI_WINDOWS_SKIP_SIGNING=true" >> $env:GITHUB_ENV
+          echo "TAURI_WINDOWS_NSIS_ONLY=true" >> $env:GITHUB_ENV
       - name: Install app dependencies
         run: npm install
       - name: Build Tauri app

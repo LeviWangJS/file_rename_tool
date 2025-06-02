@@ -34,7 +34,15 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "targets": "all"
+    "targets": "all",
+    "windows": {
+      "wix": {
+        "enabled": false
+      },
+      "nsis": {
+        "enabled": true
+      }
+    }
   },
   "plugins": {
     "shell": {
