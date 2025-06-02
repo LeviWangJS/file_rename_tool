@@ -34,10 +34,12 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "targets": ["app", "deb", "dmg", "updater"],
+    "targets": "all",
     "windows": {
-      "msi": false,
-      "nsis": true
+      "nsis": {
+        "installMode": "currentUser"
+      },
+      "wix": null
     }
   },
   "plugins": {

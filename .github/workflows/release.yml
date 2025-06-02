@@ -79,7 +79,8 @@ jobs:
           echo "TAURI_WINDOWS_NSIS_ONLY=true" >> $env:GITHUB_ENV
       - name: Install app dependencies
         run: npm install
-      - name: Build Tauri app
+      - name: Build Tauri app (macOS)
+        if: matrix.platform == 'macos-latest'
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -91,7 +92,13 @@ jobs:
           releaseName: 图片批量重命名工具 v${{ needs.create-release.outputs.version }}
           includeUpdaterJson: true
           tauriScript: npm run tauri
-          configPath: ${{ matrix.platform == 'windows-latest' && './src-tauri/tauri.windows.conf.json' || '' }}
+      - name: Build Tauri app (Windows)
+        if: matrix.platform == 'windows-latest'
+        run: npm run build:windows
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_WINDOWS_NSIS_ONLY: true
+          TAURI_WINDOWS_SKIP_SIGNING: true
 
   publish-release:
     runs-on: macos-latest
