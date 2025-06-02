@@ -53,20 +53,25 @@ jobs:
         if: matrix.platform == 'windows-latest'
         shell: pwsh
         run: |
-          # 1. 更新 Chocolatey 并强制升级 NSIS
+          # 1. 更新 Chocolatey 并安装必要工具
           choco upgrade chocolatey -y
-          choco upgrade nsis -y --force
-          
-          # 2. 安装 WebView2 运行时（如果尚未安装）
-          $webview2Path = "C:\Program Files (x86)\Microsoft\EdgeWebView\Application\*"
-          if (-not (Test-Path $webview2Path)) {
-              $webview2Url = "https://go.microsoft.com/fwlink/p/?LinkId=2124703"
-              $installerPath = "$env:TEMP\MicrosoftEdgeWebview2Setup.exe"
+          choco install -y wixtoolset --version 3.11.2
+          choco install -y nsis --force
+
+          # 2. 设置 WiX 环境变量
+          $wixPath = "C:\Program Files (x86)\WiX Toolset v3.11\bin"
+          echo "WIX=${wixPath}" >> $env:GITHUB_ENV
+          echo "Path=${wixPath};$env:Path" >> $env:GITHUB_ENV
+
+          # 3. 安装 WebView2 运行时
+          $webview2Url = "https://go.microsoft.com/fwlink/p/?LinkId=2124703"
+          $installerPath = "$env:TEMP\MicrosoftEdgeWebview2Setup.exe"
+          if (-not (Test-Path "C:\Program Files (x86)\Microsoft\EdgeWebView\Application\*")) {
               Invoke-WebRequest -Uri $webview2Url -OutFile $installerPath
               Start-Process -FilePath $installerPath -Args "/silent /install" -Wait
           }
-          
-          # 3. 验证工具链
+
+          # 4. 设置 Rust 工具链
           rustup target add x86_64-pc-windows-msvc
           rustup show
 
