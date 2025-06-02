@@ -94,7 +94,7 @@ jobs:
           tauriScript: npm run tauri
       - name: Build Tauri app (Windows)
         if: matrix.platform == 'windows-latest'
-        run: npm run build:windows
+        run: npx tauri build --target nsis
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_WINDOWS_NSIS_ONLY: true

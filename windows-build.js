@@ -14,8 +14,8 @@ process.env.TAURI_WINDOWS_SKIP_SIGNING = 'true';
 
 try {
   console.log('开始Windows构建 (仅NSIS)...');
-  // 执行Tauri构建命令，使用Windows特定配置
-  execSync('npx tauri build --config src-tauri/tauri.windows.conf.json', { 
+  // 执行Tauri构建命令，明确指定只构建NSIS格式
+  execSync('npx tauri build --target nsis --config src-tauri/tauri.windows.conf.json', { 
     stdio: 'inherit',
     env: { 
       ...process.env,

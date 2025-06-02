@@ -34,7 +34,7 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "targets": "all",
+    "targets": ["app", "nsis", "dmg", "updater"],
     "windows": {
       "nsis": {
         "installMode": "currentUser"
