@@ -205,6 +205,12 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   prefixInput.addEventListener('input', () => {
+    const maxPrefixLength = 4;
+    // 检查前缀长度
+    if (prefixInput.value.length > maxPrefixLength) {
+      prefixInput.value = prefixInput.value.substring(0, maxPrefixLength);
+      showToast(`前缀长度不能超过${maxPrefixLength}个字符`);
+    }
     state.prefix = prefixInput.value;
     updatePreview();
   });
@@ -282,14 +288,44 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 辅助函数
   function updatePreview() {
+    const maxFilenameLength = 22;
     const today = new Date();
     const year = today.getFullYear().toString().slice(2);
     const month = (today.getMonth() + 1).toString().padStart(2, '0');
     const day = today.getDate().toString().padStart(2, '0');
     const formattedDate = `${year}${month}${day}`;
-    const randomString = Math.floor(100000 + Math.random() * 900000).toString();
-
-    previewBox.textContent = `命名预览: ${state.prefix}_${state.startNumber}_${formattedDate}_${randomString}.jpg`;
+    
+    // 计算固定部分的长度
+    const numStr = state.startNumber.toString();
+    const prefix = state.prefix;
+    const extension = ".jpg";
+    
+    // 计算前缀_编号_日期_ 的长度 (不包括扩展名)
+    const fixedPartsLen = prefix.length + 1 + numStr.length + 1 + formattedDate.length + 1;
+    
+    // 计算可用于随机字符串的长度
+    let randomStrLen = 6; // 默认长度
+    if (fixedPartsLen >= maxFilenameLength) {
+      randomStrLen = 2; // 最小长度
+    } else {
+      randomStrLen = Math.min(6, Math.max(2, maxFilenameLength - fixedPartsLen));
+    }
+    
+    // 生成随机字符串
+    let randomString = '';
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    for (let i = 0; i < randomStrLen; i++) {
+      randomString += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    
+    // 构建预览
+    const nameWithoutExt = `${prefix}_${state.startNumber}_${formattedDate}_${randomString}`;
+    const preview = `${nameWithoutExt}${extension}`;
+    previewBox.textContent = `命名预览: ${preview}`;
+    
+    // 添加长度提示 (只计算不含扩展名的长度)
+    const nameLength = nameWithoutExt.length;
+    previewBox.innerHTML += `<div class="length-info">文件名长度: ${nameLength} / ${maxFilenameLength} 字符 (不含扩展名)</div>`;
   }
 
   async function displayFileList(files) {
@@ -430,6 +466,27 @@ document.addEventListener('DOMContentLoaded', () => {
     selectedPath.textContent = '未选择任何文件或文件夹';
     fileList.style.display = 'none';
     startBtn.disabled = true;
+  }
+
+  // 添加一个简单的消息提示函数
+  function showToast(message) {
+    // 检查是否已存在toast元素
+    let toast = document.getElementById('toast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'toast';
+      toast.className = 'toast';
+      document.body.appendChild(toast);
+    }
+
+    // 设置消息并显示
+    toast.textContent = message;
+    toast.classList.add('show');
+
+    // 3秒后隐藏
+    setTimeout(() => {
+      toast.classList.remove('show');
+    }, 3000);
   }
 
   // 启动应用

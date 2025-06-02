@@ -6,7 +6,6 @@ on:
       - 'v*'
   workflow_dispatch:
 
-# 添加权限配置
 permissions:
   contents: write
   packages: write
@@ -16,45 +15,24 @@ permissions:
 
 jobs:
   create-release:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest  # 改为轻量级系统
     outputs:
-      release_id: ${{ steps.create-release.outputs.result }}
+      release_id: ${{ steps.create-release.outputs.id }}
       version: ${{ steps.get_version.outputs.version }}
     steps:
       - uses: actions/checkout@v4
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 18
       - name: Get version
         id: get_version
         run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
       - name: Create release
         id: create-release
-        uses: actions/github-script@v7
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VERSION: ${{ steps.get_version.outputs.version }}
+        uses: softprops/action-gh-release@v1
         with:
-          script: |
-            try {
-              console.log('Creating release with version:', process.env.VERSION);
-              const { data } = await github.rest.repos.createRelease({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                tag_name: `v${process.env.VERSION}`,
-                name: `图片批量重命名工具 v${process.env.VERSION}`,
-                body: '请查看更改日志了解详情。',
-                draft: true,
-                prerelease: false
-              });
-              console.log('Release created successfully with ID:', data.id);
-              return data.id;
-            } catch (error) {
-              console.log('Error creating release:', error);
-              console.log('API response:', error.response?.data);
-              throw error;
-            }
+          tag_name: v${{ steps.get_version.outputs.version }}
+          name: "图片批量重命名工具 v${{ steps.get_version.outputs.version }}"
+          body: "请查看更改日志了解详情。"
+          draft: true
+          prerelease: false
 
   build:
     needs: create-release
@@ -69,59 +47,47 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 18
-      - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
-      - name: Setup Windows Environment Variables
+      - name: Setup Rust (Windows)
         if: matrix.platform == 'windows-latest'
-        shell: pwsh
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+      - name: Install Windows Dependencies
+        if: matrix.platform == 'windows-latest'
         run: |
-          echo "TAURI_WINDOWS_SKIP_SIGNING=true" >> $env:GITHUB_ENV
-          echo "TAURI_WINDOWS_NSIS_ONLY=true" >> $env:GITHUB_ENV
+          choco install -y nsis
+          # 确保 WebView2 运行时存在（Tauri 依赖）
+          curl -LO https://go.microsoft.com/fwlink/p/?LinkId=2124703
+          start /wait MicrosoftEdgeWebview2Setup.exe /silent /install
       - name: Install app dependencies
         run: npm install
-      - name: Build Tauri app (macOS)
-        if: matrix.platform == 'macos-latest'
-        uses: tauri-apps/tauri-action@v0
+      - name: Build Tauri App
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
           TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
+        run: |
+          if [[ "${{ matrix.platform }}" == "macos-latest" ]]; then
+            npm run tauri build
+          else
+            npx tauri build --target x86_64-pc-windows-msvc
+          fi
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
         with:
-          releaseId: ${{ needs.create-release.outputs.release_id }}
-          tagName: v${{ needs.create-release.outputs.version }}
-          releaseName: 图片批量重命名工具 v${{ needs.create-release.outputs.version }}
-          includeUpdaterJson: true
-          tauriScript: npm run tauri
-      - name: Build Tauri app (Windows)
-        if: matrix.platform == 'windows-latest'
-        run: npx tauri build --target nsis
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAURI_WINDOWS_NSIS_ONLY: true
-          TAURI_WINDOWS_SKIP_SIGNING: true
+          name: release-${{ matrix.platform }}
+          path: src-tauri/target/release/
 
   publish-release:
-    runs-on: macos-latest
     needs: [create-release, build]
+    runs-on: ubuntu-latest
     steps:
       - name: Publish release
-        uses: actions/github-script@v7
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RELEASE_ID: ${{ needs.create-release.outputs.release_id }}
+        uses: softprops/action-gh-release@v1
         with:
-          script: |
-            try {
-              console.log('Publishing release with ID:', process.env.RELEASE_ID);
-              await github.rest.repos.updateRelease({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                release_id: parseInt(process.env.RELEASE_ID),
-                draft: false
-              });
-              console.log('Release published successfully');
-            } catch (error) {
-              console.log('Error publishing release:', error);
-              console.log('API response:', error.response?.data);
-              throw error;
-            } 
+          draft: false
+          files: |
+            src-tauri/target/release/*.dmg
+            src-tauri/target/release/*.app.tar.gz
+            src-tauri/target/release/*.msi
+            src-tauri/target/release/*.exe

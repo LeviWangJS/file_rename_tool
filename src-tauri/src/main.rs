@@ -10,6 +10,10 @@ use dirs::home_dir;
 
 // 支持的图片扩展名
 const IMAGE_EXTENSIONS: [&str; 7] = [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".webp"];
+// 最大文件名长度
+const MAX_FILENAME_LENGTH: usize = 22;
+// 最大前缀长度
+const MAX_PREFIX_LENGTH: usize = 4;
 
 // 重命名参数
 #[derive(Debug, Deserialize)]
@@ -136,6 +140,13 @@ fn rename_files(options: RenameOptions) -> Result<RenameResult, String> {
     if options.files.is_empty() {
         return Err("没有找到可处理的文件".to_string());
     }
+    
+    // 验证并限制前缀长度
+    let prefix = if options.prefix.len() > MAX_PREFIX_LENGTH {
+        options.prefix[0..MAX_PREFIX_LENGTH].to_string()
+    } else {
+        options.prefix.clone()
+    };
 
     // 获取当前日期并格式化为YYMMDD
     let now = Local::now();
@@ -174,19 +185,34 @@ fn rename_files(options: RenameOptions) -> Result<RenameResult, String> {
             continue;
         }
 
+        // 计算已使用的文件名长度
+        let current_number = options.start_number + i as u32;
+        end_number = current_number;
+        
+        // 计算固定部分长度: 前缀_编号_日期_ (不包括扩展名)
+        let num_str = current_number.to_string();
+        let fixed_parts_len = prefix.len() + 1 + num_str.len() + 1 + formatted_date.len() + 1;
+        
+        // 计算可用于随机字符串的长度 (MAX_FILENAME_LENGTH不包括扩展名)
+        let random_str_len = if fixed_parts_len >= MAX_FILENAME_LENGTH {
+            // 如果固定部分已经超过最大长度，使用最小随机长度
+            2
+        } else {
+            // 否则，使用剩余空间，但至少为2个字符
+            std::cmp::max(2, MAX_FILENAME_LENGTH - fixed_parts_len)
+        };
+        
         // 生成随机字符串
         let random_string: String = rand::thread_rng()
             .sample_iter(&Alphanumeric)
-            .take(6)
+            .take(random_str_len)
             .map(char::from)
             .collect();
 
         // 创建新文件名
-        let current_number = options.start_number + i as u32;
-        end_number = current_number;
         let new_file_name = format!(
             "{}_{}_{}_{}{}",
-            options.prefix, current_number, formatted_date, random_string, extension
+            prefix, current_number, formatted_date, random_string, extension
         );
 
         let new_file_path = file_path.with_file_name(&new_file_name);
@@ -221,7 +247,7 @@ fn rename_files(options: RenameOptions) -> Result<RenameResult, String> {
             
             let new_folder_name = format!(
                 "{}_{} {}-{} {}张",
-                options.prefix,
+                prefix,
                 formatted_date, 
                 options.start_number, 
                 end_number, 
@@ -258,7 +284,7 @@ fn rename_files(options: RenameOptions) -> Result<RenameResult, String> {
     // 保存最后使用的序号到配置文件
     let config = Config {
         last_number: end_number + 1,
-        last_prefix: options.prefix,
+        last_prefix: prefix,
     };
     
     if let Some(config_path) = get_config_path() {

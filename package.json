@@ -9,7 +9,14 @@
     "build": "vite build",
     "preview": "vite preview",
     "tauri": "tauri",
-    "build:windows": "node windows-build.js"
+    "build:windows": "node windows-build.js",
+    "build:macos-arm": "npm run tauri build",
+    "build:macos-intel": "npm run tauri build -- --target x86_64-apple-darwin",
+    "build:all": "node scripts/build-all.js",
+    "collect-builds": "node scripts/collect-builds.js",
+    "pack": "npm run build:all && npm run collect-builds",
+    "pack:macos": "npm run build:macos-arm && npm run build:macos-intel && npm run collect-builds",
+    "pack:windows": "npm run build:windows && npm run collect-builds"
   },
   "keywords": [
     "图片",
