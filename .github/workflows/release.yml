@@ -83,13 +83,14 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
           TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
+        shell: pwsh
         run: |
-          if [[ "${{ matrix.platform }}" == "macos-latest" ]]; then
+          if ('${{ matrix.platform }}' -eq 'macos-latest') {
             npm run tauri build
-          else
+          } else {
             # Windows 构建明确指定目标
             npx tauri build --target x86_64-pc-windows-msvc
-          fi
+          }
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
