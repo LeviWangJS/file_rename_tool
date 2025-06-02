@@ -34,14 +34,10 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "targets": "all",
+    "targets": ["app", "deb", "dmg", "updater"],
     "windows": {
-      "wix": {
-        "enabled": false
-      },
-      "nsis": {
-        "enabled": true
-      }
+      "msi": false,
+      "nsis": true
     }
   },
   "plugins": {
