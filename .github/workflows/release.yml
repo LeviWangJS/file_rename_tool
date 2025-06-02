@@ -15,7 +15,7 @@ permissions:
 
 jobs:
   create-release:
-    runs-on: ubuntu-latest  # 改为轻量级系统
+    runs-on: ubuntu-latest
     outputs:
       release_id: ${{ steps.create-release.outputs.id }}
       version: ${{ steps.get_version.outputs.version }}
@@ -47,20 +47,37 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 18
-      - name: Setup Rust (Windows)
+      
+      # Windows 特定配置
+      - name: Setup Windows Environment
         if: matrix.platform == 'windows-latest'
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: x86_64-pc-windows-msvc
-      - name: Install Windows Dependencies
-        if: matrix.platform == 'windows-latest'
+        shell: pwsh
         run: |
-          choco install -y nsis
-          # 确保 WebView2 运行时存在（Tauri 依赖）
-          curl -LO https://go.microsoft.com/fwlink/p/?LinkId=2124703
-          start /wait MicrosoftEdgeWebview2Setup.exe /silent /install
+          # 1. 更新 Chocolatey 并强制升级 NSIS
+          choco upgrade chocolatey -y
+          choco upgrade nsis -y --force
+          
+          # 2. 安装 WebView2 运行时（如果尚未安装）
+          $webview2Path = "C:\Program Files (x86)\Microsoft\EdgeWebView\Application\*"
+          if (-not (Test-Path $webview2Path)) {
+              $webview2Url = "https://go.microsoft.com/fwlink/p/?LinkId=2124703"
+              $installerPath = "$env:TEMP\MicrosoftEdgeWebview2Setup.exe"
+              Invoke-WebRequest -Uri $webview2Url -OutFile $installerPath
+              Start-Process -FilePath $installerPath -Args "/silent /install" -Wait
+          }
+          
+          # 3. 验证工具链
+          rustup target add x86_64-pc-windows-msvc
+          rustup show
+
+      # macOS 特定配置
+      - name: Setup macOS Rust
+        if: matrix.platform == 'macos-latest'
+        uses: dtolnay/rust-toolchain@stable
+
       - name: Install app dependencies
         run: npm install
+
       - name: Build Tauri App
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -70,24 +87,35 @@ jobs:
           if [[ "${{ matrix.platform }}" == "macos-latest" ]]; then
             npm run tauri build
           else
+            # Windows 构建明确指定目标
             npx tauri build --target x86_64-pc-windows-msvc
           fi
+
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: release-${{ matrix.platform }}
-          path: src-tauri/target/release/
+          path: |
+            src-tauri/target/release/*.dmg
+            src-tauri/target/release/*.app.tar.gz
+            src-tauri/target/release/*.msi
+            src-tauri/target/release/*.exe
 
   publish-release:
     needs: [create-release, build]
     runs-on: ubuntu-latest
     steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
       - name: Publish release
         uses: softprops/action-gh-release@v1
         with:
           draft: false
           files: |
-            src-tauri/target/release/*.dmg
-            src-tauri/target/release/*.app.tar.gz
-            src-tauri/target/release/*.msi
-            src-tauri/target/release/*.exe
+            artifacts/release-macos-latest/*.dmg
+            artifacts/release-macos-latest/*.app.tar.gz
+            artifacts/release-windows-latest/*.msi
+            artifacts/release-windows-latest/*.exe
