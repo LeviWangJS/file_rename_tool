@@ -97,15 +97,26 @@ jobs:
             npx tauri build --target x86_64-pc-windows-msvc
           }
 
+      - name: List build artifacts for debugging
+        shell: bash
+        run: |
+          echo "Listing build artifacts for ${{ matrix.platform }}:"
+          if [[ "${{ matrix.platform }}" == "macos-latest" ]]; then
+            find src-tauri/target -name "*.dmg" -o -name "*.app.tar.gz" | sort
+          else
+            find src-tauri/target -name "*.msi" -o -name "*.exe" | sort
+          fi
+          echo "------------------------------------"
+
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: release-${{ matrix.platform }}
           path: |
-            src-tauri/target/release/*.dmg
-            src-tauri/target/release/*.app.tar.gz
-            src-tauri/target/release/*.msi
-            src-tauri/target/release/*.exe
+            src-tauri/target/**/release/bundle/**/*.dmg
+            src-tauri/target/**/release/bundle/**/*.app.tar.gz
+            src-tauri/target/**/release/bundle/**/*.msi
+            src-tauri/target/**/release/bundle/**/*.exe
 
   publish-release:
     needs: [create-release, build]
@@ -116,12 +127,19 @@ jobs:
         with:
           path: artifacts
 
+      - name: List artifacts for debugging
+        run: |
+          echo "Listing all downloaded artifacts:"
+          find artifacts -type f | sort
+          echo "------------------------------------"
+
       - name: Publish release
         uses: softprops/action-gh-release@v1
         with:
+          tag_name: v${{ needs.create-release.outputs.version }}
           draft: false
           files: |
-            artifacts/release-macos-latest/*.dmg
-            artifacts/release-macos-latest/*.app.tar.gz
-            artifacts/release-windows-latest/*.msi
-            artifacts/release-windows-latest/*.exe
+            artifacts/release-macos-latest/**/*.dmg
+            artifacts/release-macos-latest/**/*.app.tar.gz
+            artifacts/release-windows-latest/**/*.msi
+            artifacts/release-windows-latest/**/*.exe
