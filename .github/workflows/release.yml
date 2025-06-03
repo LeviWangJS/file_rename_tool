@@ -29,8 +29,8 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           tag_name: v${{ steps.get_version.outputs.version }}
-          name: "图片批量重命名工具 v${{ steps.get_version.outputs.version }}"
-          body: "请查看更改日志了解详情。"
+          name: "images_rename_tool v${{ steps.get_version.outputs.version }}"
+          body: ""
           draft: true
           prerelease: false
 

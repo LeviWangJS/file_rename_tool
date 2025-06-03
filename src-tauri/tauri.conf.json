@@ -1,6 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/tauri-apps/tauri/tauri-v2.0.0/tooling/cli/schema.json",
-  "productName": "图片批量重命名工具",
+  "productName": "images_rename_tool",
   "version": "1.0.0",
   "identifier": "com.imagerenamer.app",
   "app": {
@@ -8,7 +8,7 @@
       {
         "fullscreen": false,
         "resizable": true,
-        "title": "图片批量重命名工具",
+        "title": "rename-tool",
         "width": 900,
         "height": 700,
         "minWidth": 800,

@@ -21,30 +21,30 @@ if (!existsSync(distDir)) {
 // 产物路径配置
 const buildPaths = {
   macosArm: {
-    dmg: join(rootDir, 'src-tauri/target/release/bundle/dmg/图片批量重命名工具_1.0.0_x64.dmg'),
-    app: join(rootDir, 'src-tauri/target/release/bundle/macos/图片批量重命名工具.app')
+    dmg: join(rootDir, 'src-tauri/target/release/bundle/dmg/lina_rename_tool_1.0.0_x64.dmg'),
+    app: join(rootDir, 'src-tauri/target/release/bundle/macos/lina_rename_tool.app')
   },
   macosIntel: {
-    dmg: join(rootDir, 'src-tauri/target/x86_64-apple-darwin/release/bundle/dmg/图片批量重命名工具_1.0.0_x64.dmg'),
-    app: join(rootDir, 'src-tauri/target/x86_64-apple-darwin/release/bundle/macos/图片批量重命名工具.app')
+    dmg: join(rootDir, 'src-tauri/target/x86_64-apple-darwin/release/bundle/dmg/lina_rename_tool_1.0.0_x64.dmg'),
+    app: join(rootDir, 'src-tauri/target/x86_64-apple-darwin/release/bundle/macos/lina_rename_tool.app')
   },
   windows: {
-    exe: join(rootDir, 'src-tauri/target/release/bundle/nsis/图片批量重命名工具_1.0.0_x64-setup.exe')
+    exe: join(rootDir, 'src-tauri/target/release/bundle/nsis/lina_rename_tool_1.0.0_x64-setup.exe')
   }
 };
 
 // 输出文件路径配置
 const outputPaths = {
   macosArm: {
-    dmg: join(distDir, '图片批量重命名工具_1.0.0_macOS_arm64.dmg'),
-    app: join(distDir, '图片批量重命名工具_macOS_arm64.app')
+    dmg: join(distDir, 'lina_rename_tool_1.0.0_macOS_arm64.dmg'),
+    app: join(distDir, 'lina_rename_tool_macOS_arm64.app')
   },
   macosIntel: {
-    dmg: join(distDir, '图片批量重命名工具_1.0.0_macOS_x64.dmg'),
-    app: join(distDir, '图片批量重命名工具_macOS_x64.app')
+    dmg: join(distDir, 'lina_rename_tool_1.0.0_macOS_x64.dmg'),
+    app: join(distDir, 'lina_rename_tool_macOS_x64.app')
   },
   windows: {
-    exe: join(distDir, '图片批量重命名工具_1.0.0_Windows_x64-setup.exe')
+    exe: join(distDir, 'lina_rename_tool_1.0.0_Windows_x64-setup.exe')
   }
 };
 

@@ -1,7 +1,7 @@
 [package]
 name = "image-rename-tool"
 version = "1.0.0"
-description = "批量图片重命名工具 - 跨平台版本"
+description = ""
 authors = ["您的名字"]
 license = "MIT"
 repository = ""
