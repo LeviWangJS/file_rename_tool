@@ -205,7 +205,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   prefixInput.addEventListener('input', () => {
-    const maxPrefixLength = 4;
+    const maxPrefixLength = 8;
     // 检查前缀长度
     if (prefixInput.value.length > maxPrefixLength) {
       prefixInput.value = prefixInput.value.substring(0, maxPrefixLength);

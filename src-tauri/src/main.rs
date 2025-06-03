@@ -13,7 +13,7 @@ const IMAGE_EXTENSIONS: [&str; 7] = [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".
 // 最大文件名长度
 const MAX_FILENAME_LENGTH: usize = 22;
 // 最大前缀长度
-const MAX_PREFIX_LENGTH: usize = 4;
+const MAX_PREFIX_LENGTH: usize = 8;
 
 // 重命名参数
 #[derive(Debug, Deserialize)]
