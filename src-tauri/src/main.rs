@@ -10,10 +10,14 @@ use dirs::home_dir;
 
 // 支持的图片扩展名
 const IMAGE_EXTENSIONS: [&str; 7] = [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".webp"];
-// 最大文件名长度
-const MAX_FILENAME_LENGTH: usize = 22;
-// 最大前缀长度
-const MAX_PREFIX_LENGTH: usize = 8;
+// 默认最大前缀长度
+const DEFAULT_MAX_PREFIX_LENGTH: usize = 6;
+// 最大序号
+const MAX_NUMBER: u32 = 99999;
+// 最大整体长度（前缀+日期+序号）
+const MAX_TOTAL_LENGTH: usize = 15;
+// 日期长度
+const DATE_LENGTH: usize = 6;
 
 // 重命名参数
 #[derive(Debug, Deserialize)]
@@ -141,9 +145,34 @@ fn rename_files(options: RenameOptions) -> Result<RenameResult, String> {
         return Err("没有找到可处理的文件".to_string());
     }
     
+    // 验证起始序号不超过最大限制
+    let start_number = if options.start_number > MAX_NUMBER {
+        MAX_NUMBER
+    } else {
+        options.start_number
+    };
+    
+    // 计算可能达到的最大序号
+    let max_possible_number = start_number + options.files.len() as u32 - 1;
+    let max_possible_number = if max_possible_number > MAX_NUMBER {
+        MAX_NUMBER
+    } else {
+        max_possible_number
+    };
+    
+    // 计算序号部分需要的长度
+    let number_length = max_possible_number.to_string().len();
+    
+    // 计算前缀的最大允许长度
+    // 公式：最大总长度 - 日期长度 - 序号长度 = 前缀最大长度
+    let max_prefix_length = MAX_TOTAL_LENGTH.saturating_sub(DATE_LENGTH + number_length);
+    
+    println!("计算得出的参数: 最大序号={}, 序号长度={}, 前缀最大长度={}", 
+        max_possible_number, number_length, max_prefix_length);
+    
     // 验证并限制前缀长度
-    let prefix = if options.prefix.len() > MAX_PREFIX_LENGTH {
-        options.prefix[0..MAX_PREFIX_LENGTH].to_string()
+    let prefix = if options.prefix.len() > max_prefix_length {
+        options.prefix[0..max_prefix_length].to_string()
     } else {
         options.prefix.clone()
     };
@@ -159,7 +188,7 @@ fn rename_files(options: RenameOptions) -> Result<RenameResult, String> {
     }
 
     // 记录开始和结束序号
-    let mut end_number = options.start_number;
+    let mut end_number = start_number;
 
     // 重命名文件
     for (i, file_path_str) in options.files.iter().enumerate() {
@@ -185,34 +214,31 @@ fn rename_files(options: RenameOptions) -> Result<RenameResult, String> {
             continue;
         }
 
-        // 计算已使用的文件名长度
-        let current_number = options.start_number + i as u32;
-        end_number = current_number;
-        
-        // 计算固定部分长度: 前缀_编号_日期_ (不包括扩展名)
-        let num_str = current_number.to_string();
-        let fixed_parts_len = prefix.len() + 1 + num_str.len() + 1 + formatted_date.len() + 1;
-        
-        // 计算可用于随机字符串的长度 (MAX_FILENAME_LENGTH不包括扩展名)
-        let random_str_len = if fixed_parts_len >= MAX_FILENAME_LENGTH {
-            // 如果固定部分已经超过最大长度，使用最小随机长度
-            2
+        // 计算当前序号，确保不超过最大值
+        let current_number = if start_number + i as u32 > MAX_NUMBER {
+            MAX_NUMBER
         } else {
-            // 否则，使用剩余空间，但至少为2个字符
-            std::cmp::max(2, MAX_FILENAME_LENGTH - fixed_parts_len)
+            start_number + i as u32
         };
         
-        // 生成随机字符串
-        let random_string: String = rand::thread_rng()
-            .sample_iter(&Alphanumeric)
-            .take(random_str_len)
-            .map(char::from)
-            .collect();
+        end_number = current_number;
+        
+        // 创建序号字符串，根据数值决定是否补零
+        let number_str = if current_number < 100 {
+            // 小于100时，补零到3位
+            format!("{:03}", current_number)
+        } else {
+            // 大于等于100时，直接使用数字
+            current_number.to_string()
+        };
 
-        // 创建新文件名
+        // 创建新文件名：前缀 + 日期 + 序号
         let new_file_name = format!(
-            "{}_{}_{}_{}{}",
-            prefix, current_number, formatted_date, random_string, extension
+            "{}{}{}{}",
+            prefix, 
+            formatted_date, 
+            number_str,
+            extension
         );
 
         let new_file_path = file_path.with_file_name(&new_file_name);
@@ -245,11 +271,12 @@ fn rename_files(options: RenameOptions) -> Result<RenameResult, String> {
             let folder_name = folder.file_name().unwrap_or_default().to_string_lossy();
             println!("原文件夹名: {}", folder_name);
             
+            // 新的文件夹命名格式
             let new_folder_name = format!(
-                "{}_{} {}-{} {}张",
+                "{}{} {}-{} {}张",
                 prefix,
                 formatted_date, 
-                options.start_number, 
+                start_number, 
                 end_number, 
                 result.success.len()
             );

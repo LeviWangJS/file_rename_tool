@@ -165,7 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
         multiple: true,
         filters: [{
           name: '图片文件',
-          extensions: ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff', 'webp']
+          extensions: ['jpg', 'jpeg', 'png']
         }],
         title: '选择图片文件'
       });
@@ -205,18 +205,24 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   prefixInput.addEventListener('input', () => {
-    const maxPrefixLength = 8;
-    // 检查前缀长度
-    if (prefixInput.value.length > maxPrefixLength) {
-      prefixInput.value = prefixInput.value.substring(0, maxPrefixLength);
-      showToast(`前缀长度不能超过${maxPrefixLength}个字符`);
-    }
+    updatePrefixLengthLimit();
     state.prefix = prefixInput.value;
     updatePreview();
   });
 
   startNumberInput.addEventListener('input', () => {
-    state.startNumber = parseInt(startNumberInput.value, 10) || 1;
+    const maxNumber = 99999;
+    let num = parseInt(startNumberInput.value, 10) || 1;
+    // 检查序号范围
+    if (num > maxNumber) {
+      num = maxNumber;
+      startNumberInput.value = maxNumber;
+      showToast(`起始序号不能超过${maxNumber}`);
+    }
+    state.startNumber = num;
+    
+    // 序号变化可能影响前缀长度限制
+    updatePrefixLengthLimit();
     updatePreview();
   });
 
@@ -286,46 +292,84 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // 根据文件数量和起始序号计算前缀最大长度
+  function updatePrefixLengthLimit() {
+    const MAX_TOTAL_LENGTH = 15; // 前缀+日期+序号的最大总长度
+    const DATE_LENGTH = 6; // 日期长度固定为6位
+
+    // 计算可能的最大序号
+    const filesCount = state.selectedFiles.length || 1; // 至少有1个文件
+    const startNumber = state.startNumber;
+    const maxPossibleNumber = Math.min(startNumber + filesCount - 1, 99999);
+    
+    // 计算序号长度
+    const numberLength = maxPossibleNumber.toString().length;
+    
+    // 计算前缀最大长度
+    const maxPrefixLength = MAX_TOTAL_LENGTH - DATE_LENGTH - numberLength;
+    
+    console.log(`计算前缀限制: 文件数=${filesCount}, 起始序号=${startNumber}, 最大序号=${maxPossibleNumber}, 序号长度=${numberLength}, 前缀最大长度=${maxPrefixLength}`);
+    
+    // 检查前缀长度
+    let prefixChanged = false;
+    if (prefixInput.value.length > maxPrefixLength) {
+      const oldPrefix = prefixInput.value;
+      prefixInput.value = prefixInput.value.substring(0, maxPrefixLength);
+      state.prefix = prefixInput.value; // 更新状态中的前缀
+      prefixChanged = true;
+      showToast(`前缀长度不能超过${maxPrefixLength}个字符，以确保命名格式正确`);
+    }
+    
+    // 保存计算结果供其他函数使用
+    state.maxPrefixLength = maxPrefixLength;
+    state.numberLength = numberLength;
+    state.maxPossibleNumber = maxPossibleNumber;
+    
+    // 如果前缀被修改，立即更新预览
+    if (prefixChanged) {
+      updatePreview();
+    }
+  }
+
   // 辅助函数
   function updatePreview() {
-    const maxFilenameLength = 22;
     const today = new Date();
     const year = today.getFullYear().toString().slice(2);
     const month = (today.getMonth() + 1).toString().padStart(2, '0');
     const day = today.getDate().toString().padStart(2, '0');
     const formattedDate = `${year}${month}${day}`;
     
-    // 计算固定部分的长度
-    const numStr = state.startNumber.toString();
-    const prefix = state.prefix;
-    const extension = ".jpg";
+    // 确保使用最新的前缀值
+    const prefix = prefixInput.value;
+    state.prefix = prefix;
     
-    // 计算前缀_编号_日期_ 的长度 (不包括扩展名)
-    const fixedPartsLen = prefix.length + 1 + numStr.length + 1 + formattedDate.length + 1;
-    
-    // 计算可用于随机字符串的长度
-    let randomStrLen = 6; // 默认长度
-    if (fixedPartsLen >= maxFilenameLength) {
-      randomStrLen = 2; // 最小长度
+    // 获取序号并根据数值决定是否补零
+    let formattedNumber;
+    if (state.startNumber < 100) {
+      // 小于100时，补零到3位
+      formattedNumber = state.startNumber.toString().padStart(3, '0');
     } else {
-      randomStrLen = Math.min(6, Math.max(2, maxFilenameLength - fixedPartsLen));
-    }
-    
-    // 生成随机字符串
-    let randomString = '';
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    for (let i = 0; i < randomStrLen; i++) {
-      randomString += chars.charAt(Math.floor(Math.random() * chars.length));
+      // 大于等于100时，直接使用数字
+      formattedNumber = state.startNumber.toString();
     }
     
     // 构建预览
-    const nameWithoutExt = `${prefix}_${state.startNumber}_${formattedDate}_${randomString}`;
-    const preview = `${nameWithoutExt}${extension}`;
+    const extension = ".jpg";
+    
+    // 文件名格式：前缀+日期+序号+扩展名
+    const preview = `${prefix}${formattedDate}${formattedNumber}${extension}`;
     previewBox.textContent = `命名预览: ${preview}`;
     
-    // 添加长度提示 (只计算不含扩展名的长度)
-    const nameLength = nameWithoutExt.length;
-    previewBox.innerHTML += `<div class="length-info">文件名长度: ${nameLength} / ${maxFilenameLength} 字符 (不含扩展名)</div>`;
+    // 计算不含扩展名的长度
+    const nameWithoutExt = `${prefix}${formattedDate}${formattedNumber}`;
+    
+    // 添加格式说明和长度信息
+    const maxPrefixLength = state.maxPrefixLength || 6; // 默认为6
+    previewBox.innerHTML += `
+      <div class="preview-info">
+        格式: 前缀(${prefix.length}/${maxPrefixLength}) + 日期(${formattedDate.length}) + 序号(${formattedNumber.length})
+        <br>总长度: ${nameWithoutExt.length}/15 (不含扩展名)
+      </div>`;
   }
 
   async function displayFileList(files) {

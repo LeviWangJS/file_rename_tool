@@ -267,4 +267,11 @@ footer {
   margin-top: 5px;
   font-size: 12px;
   color: var(--gray-color);
+}
+
+.preview-info {
+  margin-top: 5px;
+  font-size: 12px;
+  color: var(--gray-color);
+  font-family: monospace;
 } 
