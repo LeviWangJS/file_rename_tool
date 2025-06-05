@@ -303,7 +303,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const maxPossibleNumber = Math.min(startNumber + filesCount - 1, 99999);
     
     // 计算序号长度
-    const numberLength = maxPossibleNumber.toString().length;
+    const numberLength = Math.max(maxPossibleNumber.toString().length, 3);
     
     // 计算前缀最大长度
     const maxPrefixLength = MAX_TOTAL_LENGTH - DATE_LENGTH - numberLength;

@@ -1,17 +1,15 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use chrono::Local;
-use rand::{distributions::Alphanumeric, Rng};
+use chrono::Utc;
+use dirs;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Path, PathBuf};
 use dirs::home_dir;
 
 // 支持的图片扩展名
-const IMAGE_EXTENSIONS: [&str; 7] = [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".webp"];
-// 默认最大前缀长度
-const DEFAULT_MAX_PREFIX_LENGTH: usize = 6;
+const SUPPORTED_EXTENSIONS: [&str; 3] = [".jpg", ".jpeg", ".png"];
 // 最大序号
 const MAX_NUMBER: u32 = 99999;
 // 最大整体长度（前缀+日期+序号）
@@ -178,7 +176,7 @@ fn rename_files(options: RenameOptions) -> Result<RenameResult, String> {
     };
 
     // 获取当前日期并格式化为YYMMDD
-    let now = Local::now();
+    let now = Utc::now();
     let formatted_date = now.format("%y%m%d").to_string();
 
     // 获取目标文件夹
@@ -206,7 +204,7 @@ fn rename_files(options: RenameOptions) -> Result<RenameResult, String> {
             None => "".to_string(),
         };
 
-        if !IMAGE_EXTENSIONS.contains(&extension.to_lowercase().as_str()) {
+        if !SUPPORTED_EXTENSIONS.contains(&extension.to_lowercase().as_str()) {
             result.error.push(FileError {
                 file: file_path.file_name().unwrap_or_default().to_string_lossy().to_string(),
                 error: "不是支持的图片格式".to_string(),
@@ -360,7 +358,7 @@ fn collect_image_files(dir: &Path, result: &mut Vec<String>) -> Result<(), Strin
             let _ = collect_image_files(&path, result);
         } else if let Some(ext) = path.extension() {
             let extension = format!(".{}", ext.to_string_lossy().to_lowercase());
-            if IMAGE_EXTENSIONS.contains(&extension.as_str()) {
+            if SUPPORTED_EXTENSIONS.contains(&extension.as_str()) {
                 result.push(path.to_string_lossy().to_string());
             }
         }

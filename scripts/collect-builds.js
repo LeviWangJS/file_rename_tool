@@ -21,12 +21,12 @@ if (!existsSync(distDir)) {
 // 产物路径配置
 const buildPaths = {
   macosArm: {
-    dmg: join(rootDir, 'src-tauri/target/release/bundle/dmg/lina_rename_tool_1.0.0_x64.dmg'),
-    app: join(rootDir, 'src-tauri/target/release/bundle/macos/lina_rename_tool.app')
+    dmg: join(rootDir, 'src-tauri/target/release/bundle/dmg/images_rename_tool_1.0.0_x64.dmg'),
+    app: join(rootDir, 'src-tauri/target/release/bundle/macos/images_rename_tool.app')
   },
   macosIntel: {
-    dmg: join(rootDir, 'src-tauri/target/x86_64-apple-darwin/release/bundle/dmg/lina_rename_tool_1.0.0_x64.dmg'),
-    app: join(rootDir, 'src-tauri/target/x86_64-apple-darwin/release/bundle/macos/lina_rename_tool.app')
+    dmg: join(rootDir, 'src-tauri/target/x86_64-apple-darwin/release/bundle/dmg/images_rename_tool_1.0.0_x64.dmg'),
+    app: join(rootDir, 'src-tauri/target/x86_64-apple-darwin/release/bundle/macos/images_rename_tool.app')
   },
   windows: {
     exe: join(rootDir, 'src-tauri/target/release/bundle/nsis/lina_rename_tool_1.0.0_x64-setup.exe')
